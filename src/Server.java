@@ -8,7 +8,11 @@ import java.util.HashMap;
 public class Server{
 
     //List of available clients (actually thier handlers)
-    private HashMap<String, ClientHandler> clientHandlers;
+    static HashMap<String, ClientHandler> clientHandlers;
+
+    public HashMap<String, ClientHandler> getClients(){
+        return  clientHandlers;
+    }
 
     //Port of communication
     private final int PORT = 9000;
@@ -48,4 +52,5 @@ public class Server{
             exc.printStackTrace();
         }
     }
+
 }
