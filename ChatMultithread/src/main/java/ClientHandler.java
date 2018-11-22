@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ClientHandler implements Runnable {
 
-    private Socket socket;
+    final Socket socket;
     final DataInputStream dis;
     final DataOutputStream dos;
     private String name;
@@ -66,11 +66,11 @@ public class ClientHandler implements Runnable {
 
                 // search for the recipient in the connected devices list.
                 // ar is the vector storing client of active users
-                for (Map.Entry<String, ClientHandler> mc : Server.clientHandlers.entrySet())
-                {
-                    if (!mc.getKey().equals(this.name))
-                    mc.getValue().dos.writeUTF(this.name+": "+received);
-                }
+//                for (Map.Entry<String, ClientHandler> mc : Server.clientHandlers.entrySet())
+//                {
+//                    if (!mc.getKey().equals(this.name))
+//                    mc.getValue().dos.writeUTF(this.name+": "+received);
+//                }
             } catch (IOException e) {
 
                 e.printStackTrace();
