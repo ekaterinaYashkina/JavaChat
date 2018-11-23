@@ -3,21 +3,17 @@ import java.net.*;
 import java.util.Scanner;
 
     public class Client {
-        final static int ServerPort = 9000;
+        final private int ServerPort = 9000;
         private DataInputStream dis;
         private Socket socket;
         private DataOutputStream dos;
-        private String username;
+        private boolean isloggedin;
 
-        Scanner scan = new Scanner(System.in);
+        private Scanner scan = new Scanner(System.in);
 
         public Client() {
 
-            //this.username = username;
-
             try {
-                //Scanner scn = new Scanner(System.in);
-
                 // getting localhost ip
                 InetAddress ip = InetAddress.getByName("localhost");
 
@@ -28,24 +24,16 @@ import java.util.Scanner;
                 this.dis = new DataInputStream(socket.getInputStream());
                 this.dos = new DataOutputStream(socket.getOutputStream());
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+                System.out.println("No such host");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
         public void start() {
+            isloggedin = true;
             sendMessage.start();
             readMessage.start();
-//            new ServerHandler().start();
-
-//            try {
-//                dos.writeUTF(this.username);
-//            } catch (IOException eIO) {
-//                System.out.println("Exception doing login : " + eIO);
-////                disconnect();
-////                return false;
-//            }
         }
 
 
@@ -53,22 +41,26 @@ import java.util.Scanner;
             try {
                 if (dis != null) dis.close();
             } catch (Exception e) {
+                System.out.println("Exception while closing DataInputStream: "+e);
             }
             try {
                 if (dos != null) dos.close();
             } catch (Exception e) {
+                System.out.println("Exception while closing DataOutputStream: "+e);
             }
             try {
                 if (socket != null) socket.close();
             } catch (Exception e) {
+                System.out.println("Exception while closing Socket: "+e);
             }
-        }
+            }
 
 
-        Thread sendMessage = new Thread(new Runnable() {
+
+        private Thread sendMessage = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
+                while (isloggedin) {
                     // read the message to deliver.
                     String msg = scan.nextLine();
 
@@ -76,7 +68,10 @@ import java.util.Scanner;
                         System.out.print("> ");
                         // write on the output stream
                         dos.writeUTF(msg);
-                        if (msg.equals("logout")) break;
+                        if (msg.equals("logout")) {
+                            isloggedin = false;
+                            readMessage.interrupt();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -90,12 +85,11 @@ import java.util.Scanner;
         });
 
         // readMessage thread
-        Thread readMessage = new Thread(new Runnable() {
+        private Thread readMessage = new Thread(new Runnable() {
             @Override
             public void run() {
 
-                while (true) {
-                    //System.out.println("jjj");
+                while (isloggedin) {
                     try {
                         // read the message form the input datastream
                         String msg = dis.readUTF();
@@ -103,6 +97,7 @@ import java.util.Scanner;
                         System.out.println("\n"+msg);
                         System.out.print("> ");
                     } catch (IOException e) {
+                        //TODO: better way?
                         System.out.println("Server has closed the connection: " + e);
                         break;
                     }
@@ -112,18 +107,13 @@ import java.util.Scanner;
 
 
         public static void main(String[] args) {
-//            String userName = "Anonymous";
-//            Scanner scan = new Scanner(System.in);
-//
-//            System.out.println("Enter the username: ");
-//            userName = scan.nextLine();
 
             // create the Client object
             Client client = new Client();
             // try to connect to the server and return if not connected
             client.start();
 
-            System.out.println("\nHello.! Welcome to the chatroom.");
+            System.out.println("\nHello! Welcome to the chatroom.");
         }
     }
 
