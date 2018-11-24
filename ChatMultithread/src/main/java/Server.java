@@ -1,3 +1,6 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,6 +12,7 @@ import java.util.Map;
 
 public class Server{
 
+    private final static Logger logger = LogManager.getLogger("serverLog");
     //List of available clients (actually their handlers)
     private HashMap<Integer, ClientHandler1> clientHandlers;
     private HashSet<String> uniqueNames;
@@ -35,11 +39,14 @@ public class Server{
         try {
             ServerSocket serSocket = new ServerSocket(PORT);
 
+            logger.info("Established connection on port"+PORT+", socket info: "+serSocket.toString());
             System.out.println("Established connection on port"+PORT);
+            logger.info("Wait for clients...");
             System.out.println("Wait for clients...");
 
             while(isRunning){
                 Socket socket = serSocket.accept();
+                logger.info("New client is here!");
                 System.out.println("New client is here!");
                 DataInputStream dis = new DataInputStream(socket.getInputStream());
                 DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
@@ -48,6 +55,7 @@ public class Server{
 
                 clientHandlers.put(id,handler);
                 handler.start();
+                logger.info("Client with id "+id+" added");
                 id++;
                 System.out.println("Client added!");
 
@@ -63,7 +71,8 @@ public class Server{
                 }
             }
             catch(Exception e) {
-                System.out.println("Exception closing the server and clients: " + e);
+                logger.error("Exception closing the server and clients: " + e);
+                System.out.println("Exception closing the server and clients");
             }
 
 
@@ -82,6 +91,7 @@ public class Server{
             clientHandlers.remove(handler.id);
 
             broadcast(nameLeave+" has left the chatroom!", handler.id);
+            logger.info("Client with id "+handler.id+" send request to logout.");
 
         return true;
         }
@@ -99,15 +109,20 @@ public class Server{
                     handler.setUserName(username);
                     uniqueNames.add(username);}
                     handler.dos.writeUTF("Hello, "+handler.name+"!");
+                    logger.info("Client with id "+handler.id+" is initialized");
                     broadcast(handler.name+" has joined the chatroom!", handler.id);
+
                     break;
                 }
-                else handler.dos.writeUTF("A user with provided name already exists. Try another one.");
+                else {
+                    handler.dos.writeUTF("A user with provided name already exists. Try another one.");
+                    logger.info("Client with name "+username+" is already in the chatroom. Attempting to initialize again...");
+                }
             }
 
             return true;
         }catch (IOException e){
-            e.printStackTrace();
+            logger.error("Exception while sending initialization message: "+e);
             return false;
         }
     }
@@ -116,16 +131,18 @@ public class Server{
     //TODO - use returned value for retry sending
     private boolean broadcast (String message, int sender){
         try{
+            logger.info("Broadcasting message from client "+sender+"...");
         for (Map.Entry<Integer, ClientHandler1> mc : clientHandlers.entrySet())
         {
             if (!mc.getKey().equals(sender))
                 mc.getValue().dos.writeUTF(message);
 
         }
+            logger.info("Successfully broadcasted message from "+sender);
             return true;
         }
         catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Exception while broadcasting message from "+sender);
             return false;
         }
     }
@@ -153,6 +170,7 @@ public class Server{
         @Override
         public void run() {
             while (!isloggedin){
+                logger.info("Trying to initialize client "+this.id+"....");
                 isloggedin = initializeUser(this);
             }
             String received;
@@ -164,6 +182,7 @@ public class Server{
                     received = dis.readUTF();
 
                     if(received.equals("logout")){
+                        logger.info("A client "+this.id+" wants to logout....");
                         System.out.println(this.name+" has logged out");
                         break;
                     }
@@ -178,16 +197,16 @@ public class Server{
             try
             {
                 // closing resources
-                boolean loggedOut = false;
-                while (!loggedOut){
-                loggedOut = logoutUser(this);}
+                //boolean loggedOut = false;
+                boolean loggedOut = logoutUser(this);
+                if (!loggedOut) logger.error("The client with id "+this.id+" has been already deleted!");
                 this.socket.close();
                 this.dis.close();
                 this.dos.close();
-                Thread.currentThread().interrupt();
+                logger.info("Terminated client "+this.id+" process");
 
             }catch(IOException e){
-                e.printStackTrace();
+                logger.error("Exception while releasing resources: "+e);
             }
         }
     }
