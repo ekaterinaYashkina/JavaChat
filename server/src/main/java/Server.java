@@ -8,13 +8,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server implements ConnectionHandler {
     private final static Logger logger = LogManager.getLogger("serverLog");
+    private final static ResourceManager manager = new ResourceManager();
 
     public static void main(String[] args) {
+
+        if (args.length == 1){
+            manager.setDirectory(args[0]);
+        }
+
         new Server();
     }
 
     private CopyOnWriteArrayList<Connection> connections = new CopyOnWriteArrayList<>();
     private Server(){
+        try{
+            manager.loadClass();
+        }
+        catch (ClassNotFoundException e){
+            logger.warn("No needed classes in JAR");
+        }
         try (ServerSocket socket = new ServerSocket(9000)){
             logger.info("Running.....");
             while(true){
@@ -42,9 +54,36 @@ public class Server implements ConnectionHandler {
     }
 
 
-    public synchronized void onReceiveString(Connection connection, String value, int status) {
+    public void onReceiveString(Connection connection, String value, int status) {
+        String withoutNickname = value.substring(value.indexOf(":")+2);
+        System.out.println(withoutNickname);
+        if (withoutNickname.startsWith("/")) {
+            String command;
+            String[] params = null;
+            if (withoutNickname.contains(" ")){
+            command = withoutNickname.substring(0, withoutNickname.indexOf(" "));
+            System.out.println(command);
+            params = withoutNickname.substring(withoutNickname.indexOf(" ")+1).split(" ");
+            System.out.println(params.length);}
+            else command = withoutNickname;
+            CommandProducer result = manager.caluculate(command);
+            if (result == null) {
+                connection.sendString("No such command");
+                return;
+            }
+            try{
+                Calculator calc = new Calculator(result, params, connection);
+                Thread calculation = new Thread(calc);
+                calculation.start();}
+            catch (IllegalArgumentException e) {
+                logger.warn(e);
+                connection.sendString(e.getMessage());
 
-        if (value.equals("exit")){
+            }
+
+
+        }
+        else if (withoutNickname.equals("exit")){
             connection.disconnect();
         }
         else broadcast(value, connection);

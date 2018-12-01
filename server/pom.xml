@@ -28,6 +28,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>operations</groupId>
+            <artifactId>operations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <parent>
