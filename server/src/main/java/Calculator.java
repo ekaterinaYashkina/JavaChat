@@ -9,6 +9,7 @@ public class Calculator implements Runnable {
         return result;
     }
     public Calculator(CommandProducer commandProducer, String[] params, Connection connection) throws IllegalArgumentException{
+        System.out.println("toooot");
         if (params.length!=commandProducer.amountParams())
             throw new IllegalArgumentException("Wrong amount of arguments. Expected: "+commandProducer.amountParams()+
                     ", received: "+params.length);
@@ -18,8 +19,8 @@ public class Calculator implements Runnable {
     }
     @Override
     public void run() {
+        System.out.println("tooooot");
         result = commandProducer.performCalculation(params);
         connection.sendString(result);
-
     }
 }
