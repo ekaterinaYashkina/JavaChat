@@ -3,46 +3,57 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Client implements ConnectionHandler {
 
     private final static Logger logger = LogManager.getLogger("clientLog");
-    private static int port = 9000;
-    private static String ip = "localhost";
 
     //0 - default, 1 - custom
-    private static int flag = 0;
     //private static InetAddress ip;
     private String nickname = "Anonymous";
     private Connection connection;
+    private final int port;
+    private final String ip;
 
     public static void main(String[] args) throws Exception {
+        int flag = 1;
+        int port = 9000;
+        String ip = "localhost";
         if (args.length == 2){
             port = Integer.parseInt(args[0]);
             ip = args[1];
+            flag = 0;
         }
         else if (args.length == 1){
             logger.error("Wrong amount of arguments provided: expected 0 or 2, got 1");
             System.out.println("Wrong amount of arguments provided: expected 0 or 2, got 1");
             return;
         }
-        new Client();
+
+
+        Client c = new Client(flag, ip, port);
+        c.initConnection();
+        c.startApplication();
     }
 
-    private Client(){
 
+    public Client(int flag, String ip, int port){
+
+        this.port = port;
+        this.ip = ip;
+    }
+
+    public void initConnection(){
         try {
-            if (flag == 0) connection = new Connection(this, ip, port);
-            else{
-            InetAddress ipAdd = InetAddress.getByName("localhost");
-            connection = new Connection(this, ipAdd, port);}
-            logger.info("Connected to server");
-            startApplication();
+            InetAddress ipAddr = InetAddress.getByName(this.ip);
+            connection = new Connection(this, ipAddr, port);
+        } catch (UnknownHostException e) {
+            logger.error("No host with such ip: {}", ip, e);
         } catch (IOException e) {
             logger.error(e);
         }
-
     }
 
     private void startApplication(){

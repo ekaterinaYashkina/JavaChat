@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class ResourceManager {
 
-    private String directory = "plugins";
+    private String directory = "out/artifacts/operations_jar";
 
     public void setDirectory(String directory) {
         this.directory = directory;
@@ -22,11 +22,13 @@ public class ResourceManager {
     public void loadClass() throws ClassNotFoundException {
         File pluginsDir = new File(directory);
         for (File jar : pluginsDir.listFiles()) {
+            System.out.println(jar);
             try {
                 URL[] urls = new URL[]{jar.toURL()};
                 ClassLoader loader = new URLClassLoader(urls);
 
-                String className = jar.toString().split(".jar")[0];
+                String className = jar.getName().split(".jar")[0];
+                System.out.println(className);
                 Class classLoad = loader.loadClass(className);
                 CommandProducer prod = (CommandProducer) classLoad.newInstance();
                 String opertaion = prod.getInvokationCommand();
