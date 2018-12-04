@@ -3,9 +3,20 @@
     <Properties>
         <Property name="logPath">logs</Property>
         <Property name="fileNetwork">networkConnection</Property>
+        <Property name="pluginsLoad">plugins</Property>
     </Properties>
     <Appenders>
         <RollingFile name="network" fileName="${logPath}/${fileNetwork}.log" filePattern="${logPath}/${fileNetwork}_%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="[%highlight{%-5level}] %d{DEFAULT} %c{1}.%M() - %msg%n%throwable{short.lineNumber}" />
+            <Policies>
+                <!-- Causes a rollover if the log file is older than the current JVM's start time -->
+                <OnStartupTriggeringPolicy />
+                <!-- Causes a rollover once the date/time pattern no longer applies to the active file -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="plugins" fileName="${logPath}/${pluginsLoad}.log" filePattern="${logPath}/${pluginsLoad}_%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="[%highlight{%-5level}] %d{DEFAULT} %c{1}.%M() - %msg%n%throwable{short.lineNumber}" />
             <Policies>
                 <!-- Causes a rollover if the log file is older than the current JVM's start time -->
@@ -19,6 +30,10 @@
     <Loggers>
         <Logger name = "networkLog" level="DEBUG" additivity="false">
             <AppenderRef ref="network" />
+        </Logger>
+
+        <Logger name = "pluginLog" level="DEBUG" additivity="false">
+            <AppenderRef ref="plugins" />
         </Logger>
 
     </Loggers>
