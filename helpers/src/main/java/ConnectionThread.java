@@ -3,6 +3,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 
+//Thread for reading from server or client (depends on connection)
 public class ConnectionThread implements Runnable {
 
     private final static Logger logger = LogManager.getLogger("networkLog");
@@ -23,7 +24,7 @@ public class ConnectionThread implements Runnable {
             logger.info("Connection on "+this.toString() +"established");
             while (!Thread.currentThread().isInterrupted()) {
                 String msg = reader.readLine();
-                handler.onReceiveString(connection, msg, 0);
+                handler.onReceiveString(connection, msg);
             }
         } catch (IOException e) {
             handler.onException(connection, e);

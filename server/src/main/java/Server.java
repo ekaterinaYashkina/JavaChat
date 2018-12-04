@@ -19,6 +19,7 @@ public class Server implements ConnectionHandler {
         new Server();
     }
 
+    //Thread-access special storage
     private CopyOnWriteArrayList<Connection> connections = new CopyOnWriteArrayList<>();
     private Server(){
         try{
@@ -41,11 +42,7 @@ public class Server implements ConnectionHandler {
         }
     }
 
-//    public synchronized boolean disconnectUser(Connection connection){
-//
-//    }
-
-
+    //When a user is connected
     public synchronized void onConnectionReady(Connection connection) {
         connections.add(connection);
         logger.info("New connection "+connection+"has been established");
@@ -54,17 +51,18 @@ public class Server implements ConnectionHandler {
     }
 
 
-    public void onReceiveString(Connection connection, String value, int status) {
+    //process input and send result or calculate or close the resources based on it
+    public void onReceiveString(Connection connection, String value) {
         String withoutNickname = value.substring(value.indexOf(":")+2);
         System.out.println(withoutNickname);
         if (withoutNickname.startsWith("/")) {
             String command;
             String[] params = null;
             if (withoutNickname.contains(" ")){
-            command = withoutNickname.substring(0, withoutNickname.indexOf(" "));
-            System.out.println(command);
-            params = withoutNickname.substring(withoutNickname.indexOf(" ")+1).split(" ");
-            System.out.println(params.length);}
+                command = withoutNickname.substring(0, withoutNickname.indexOf(" "));
+                System.out.println(command);
+                params = withoutNickname.substring(withoutNickname.indexOf(" ")+1).split(" ");
+                System.out.println(params.length);}
             else command = withoutNickname;
             CommandProducer result = manager.caluculate(command);
             if (result == null) {
@@ -90,6 +88,7 @@ public class Server implements ConnectionHandler {
     }
 
 
+    //Close connection passed
     public synchronized void onDisconnect(Connection connection) {
         connections.remove(connection);
         logger.info("Connection "+connection+" is closing...");
@@ -102,6 +101,7 @@ public class Server implements ConnectionHandler {
         logger.error("Exception occurred", e);
     }
 
+    //Send message everybody except the one that actually sent the message
     private synchronized void broadcast(String msg, Connection listn){
 
         final int size = connections.size();

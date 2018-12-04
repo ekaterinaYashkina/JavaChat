@@ -9,10 +9,14 @@ public class Connection  {
 
     private final static Logger logger = LogManager.getLogger("networkLog");
     private final Socket socket;
-    private final Thread readingStream;
-    //private final BufferedReader reader;
+    private final Thread readingStream; //thread for reading from the server
     private final ConnectionHandler listener;
     private final BufferedWriter writer;
+
+    public Socket getSocket(){
+        System.out.println(this.socket);
+        return socket;
+    }
 
 
     public Connection(ConnectionHandler listener, InetAddress ip, int port) throws IOException {
@@ -26,7 +30,6 @@ public class Connection  {
     public Connection(ConnectionHandler listener, Socket socket) throws IOException {
         this.socket = socket;
         this.listener = listener;
-        //reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
         readingStream = new Thread(new ConnectionThread(listener, this, this.socket.getInputStream()));
 
@@ -34,6 +37,7 @@ public class Connection  {
     }
 
 
+    //method for sending message to server
     public synchronized void sendString(String msg){
         try {
             writer.write(msg+"\r\n");
@@ -43,19 +47,18 @@ public class Connection  {
         }
     }
 
+    //disconnecting from server and closing all resources
     public synchronized void disconnect(){
         readingStream.interrupt();
         logger.info("Connection " +this.toString()+" is stopping...");
         try {
-            //writer.write("DISCONNECT");
             socket.close();
             logger.info("Socket "+socket.toString()+"is closed");
-            //writer.close();
-
         }catch (IOException e){
             listener.onException(Connection.this, e);
         }
     }
+
 
     public String toString(){
         return socket.getPort()+":"+socket.getInetAddress();
